@@ -409,7 +409,7 @@ private struct SubscriptionRow: View {
 
             if subscription.isActive, let billingStatus = subscription.nextBillingStatus {
                 BillingScheduleProgressView(
-                    scheduleLabel: "請求日",
+                    scheduleLabel: subscription.billingDateLabel,
                     countdownLabel: subscription.billingCountdownLabel,
                     status: billingStatus,
                     isActive: subscription.isActive

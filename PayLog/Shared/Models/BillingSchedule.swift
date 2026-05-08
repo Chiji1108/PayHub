@@ -469,6 +469,9 @@ extension SubscriptionItem {
     var calendarEventRecurrence: CalendarEventRecurrence? {
         let interval = normalizedBillingInterval
         let calendar = Calendar.autoupdatingCurrent
+        guard let billingAnchorDate else {
+            return nil
+        }
         let components = calendar.dateComponents([.month, .day], from: billingAnchorDate)
 
         switch billingUnit {
@@ -495,7 +498,11 @@ extension SubscriptionItem {
     }
 
     var billingScheduleText: String {
-        billingFrequency.scheduleDescription(anchorDate: billingAnchorDate)
+        guard let billingAnchorDate else {
+            return missingBillingDateText
+        }
+
+        return billingFrequency.scheduleDescription(anchorDate: billingAnchorDate)
     }
 
     var nextBillingStatus: BillingScheduleStatus? {
@@ -506,7 +513,11 @@ extension SubscriptionItem {
         referenceDate: Date = .now,
         calendar: Calendar = .autoupdatingCurrent
     ) -> BillingScheduleStatus? {
-        BillingScheduleCalculator.recurringStatus(
+        guard let billingAnchorDate else {
+            return nil
+        }
+
+        return BillingScheduleCalculator.recurringStatus(
             unit: billingUnit,
             interval: normalizedBillingInterval,
             anchorDate: billingAnchorDate,

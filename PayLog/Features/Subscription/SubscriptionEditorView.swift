@@ -30,6 +30,7 @@ struct SubscriptionEditorView: View {
     @State private var billingInterval = 1
     @State private var billingUnit: SubscriptionBillingUnit = .month
     @State private var currency: SubscriptionCurrency = .jpy
+    @State private var hasBillingAnchorDate = false
     @State private var billingAnchorDate = Calendar.autoupdatingCurrent.startOfDay(for: Date.now)
     @State private var paymentMethod: SubscriptionPaymentMethod = .unspecified
     @State private var notes = ""
@@ -63,6 +64,7 @@ struct SubscriptionEditorView: View {
         _billingInterval = State(initialValue: max(subscription?.billingInterval ?? 1, 1))
         _billingUnit = State(initialValue: subscription?.billingUnit ?? initialBillingUnit ?? .month)
         _currency = State(initialValue: subscription?.currency ?? .jpy)
+        _hasBillingAnchorDate = State(initialValue: subscription?.billingAnchorDate != nil)
         _billingAnchorDate = State(
             initialValue: Calendar.autoupdatingCurrent.startOfDay(for: subscription?.billingAnchorDate ?? .now)
         )
@@ -116,7 +118,12 @@ struct SubscriptionEditorView: View {
                         Text(billingFrequency.editorIntervalDescription)
                     }
 
-                    DatePicker("基準日", selection: $billingAnchorDate, displayedComponents: .date)
+                    Toggle("\(billingDateLabel)を設定", isOn: $hasBillingAnchorDate)
+                        .sensoryFeedback(.selection, trigger: hasBillingAnchorDate)
+
+                    if hasBillingAnchorDate {
+                        DatePicker(billingDateLabel, selection: $billingAnchorDate, displayedComponents: .date)
+                    }
                 } header: {
                     Text("支払い周期")
                 } footer: {
@@ -304,8 +311,21 @@ struct SubscriptionEditorView: View {
         SubscriptionBillingFrequency(interval: billingInterval, unit: billingUnit)
     }
 
-    private var normalizedAnchorDate: Date {
-        Calendar.autoupdatingCurrent.startOfDay(for: billingAnchorDate)
+    private var billingDateLabel: String {
+        switch paymentMethod {
+        case .onSite:
+            "予定日"
+        case .card, .bankAccount, .invoice, .unspecified:
+            "請求日"
+        }
+    }
+
+    private var normalizedAnchorDate: Date? {
+        guard hasBillingAnchorDate else {
+            return nil
+        }
+
+        return Calendar.autoupdatingCurrent.startOfDay(for: billingAnchorDate)
     }
 
     private var parsedAmount: Decimal? {
@@ -341,13 +361,17 @@ struct SubscriptionEditorView: View {
     }
 
     private var billingScheduleFooter: String {
+        guard hasBillingAnchorDate else {
+            return ""
+        }
+
         return switch billingUnit {
         case .week:
-            "基準日の曜日で繰り返します。"
+            "設定した\(billingDateLabel)の曜日で繰り返します。"
         case .month:
-            "基準日の日付で繰り返します。存在しない日は月末に丸めます。"
+            "設定した\(billingDateLabel)の日付で繰り返します。存在しない日は月末に丸めます。"
         case .year:
-            "基準日の月日で繰り返します。2月29日は平年では2月28日扱いです。"
+            "設定した\(billingDateLabel)の月日で繰り返します。2月29日は平年では2月28日扱いです。"
         }
     }
 

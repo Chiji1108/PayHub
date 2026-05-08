@@ -230,7 +230,7 @@ final class SubscriptionItem {
     var sortOrder: Int = 0
     var createdAt: Date = Date.now
     var billingInterval: Int = 1
-    var billingAnchorDate: Date = Date.now
+    var billingAnchorDate: Date?
     private var billingUnitRawValue: String = SubscriptionBillingUnit.month.rawValue
     private var currencyCodeRawValue: String = SubscriptionCurrency.jpy.rawValue
     private var paymentMethodRawValue: String?
@@ -286,6 +286,19 @@ final class SubscriptionItem {
         paymentMethod.billingCountdownLabel
     }
 
+    var billingDateLabel: String {
+        switch paymentMethod {
+        case .onSite:
+            "予定日"
+        case .card, .bankAccount, .invoice, .unspecified:
+            "請求日"
+        }
+    }
+
+    var missingBillingDateText: String {
+        "\(billingDateLabel)未設定"
+    }
+
     init(
         name: String,
         amount: Decimal,
@@ -293,7 +306,7 @@ final class SubscriptionItem {
         billingInterval: Int = 1,
         billingUnit: SubscriptionBillingUnit = .month,
         currency: SubscriptionCurrency = .jpy,
-        billingAnchorDate: Date = .now,
+        billingAnchorDate: Date? = nil,
         paymentMethod: SubscriptionPaymentMethod = .unspecified,
         notes: String? = nil,
         card: Card? = nil,
@@ -306,7 +319,11 @@ final class SubscriptionItem {
         self.sortOrder = sortOrder
         self.createdAt = createdAt
         self.billingInterval = max(billingInterval, 1)
-        self.billingAnchorDate = Calendar.autoupdatingCurrent.startOfDay(for: billingAnchorDate)
+        if let billingAnchorDate {
+            self.billingAnchorDate = Calendar.autoupdatingCurrent.startOfDay(for: billingAnchorDate)
+        } else {
+            self.billingAnchorDate = nil
+        }
         self.billingUnitRawValue = billingUnit.rawValue
         self.currencyCodeRawValue = currency.rawValue
         self.paymentMethodRawValue = paymentMethod.rawValue

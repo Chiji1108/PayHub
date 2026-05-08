@@ -18,12 +18,16 @@ struct SubscriptionDetailView: View {
             Section("固定費") {
                 ActiveStatusLabeledContent(item: subscription)
                 LabeledContent("金額", value: subscription.amountWithBillingCycleText)
-                BillingScheduleProgressView(
-                    scheduleLabel: "請求日",
-                    countdownLabel: subscription.billingCountdownLabel,
-                    status: subscription.nextBillingStatus,
-                    isActive: subscription.isActive
-                )
+                if let billingStatus = subscription.nextBillingStatus {
+                    BillingScheduleProgressView(
+                        scheduleLabel: subscription.billingDateLabel,
+                        countdownLabel: subscription.billingCountdownLabel,
+                        status: billingStatus,
+                        isActive: subscription.isActive
+                    )
+                } else {
+                    LabeledContent(subscription.billingDateLabel, value: "未設定")
+                }
                 LabeledContent("支払い方法", value: subscription.paymentMethod.label)
 
                 switch subscription.paymentMethod {
