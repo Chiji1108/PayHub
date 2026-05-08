@@ -124,6 +124,9 @@ struct SubscriptionInsightsView: View {
             }
         }
         .navigationTitle("固定費サマリー")
+        .onAppear {
+            yenRates = SubscriptionInsightSettings.loadYenRates()
+        }
         .task(id: shareSnapshotIdentifier) {
             updateShareImage()
         }
@@ -371,6 +374,7 @@ struct SubscriptionInsightsView: View {
                     }
                 }
                 .frame(height: 320)
+                .padding(.horizontal, 16)
             }
 
             if let selectedPaymentSourceSegment {
@@ -589,6 +593,7 @@ private struct SubscriptionInsightsShareCard: View {
                 }
                 .chartLegend(position: .bottom, alignment: .center, spacing: 24)
                 .frame(height: 320)
+                .padding(.horizontal, 16)
                 .chartBackground { chartProxy in
                     GeometryReader { geometry in
                         if let plotFrame = chartProxy.plotFrame {
