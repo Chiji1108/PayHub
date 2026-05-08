@@ -120,7 +120,7 @@ struct BankEditorView: View {
                                 accountNumber: trimmedAccountNumber,
                                 notes: trimmedNotes,
                                 isActive: isActive,
-                                sortOrder: modelContext.nextSortOrder(for: Bank.self, isActive: isActive)
+                                sortOrder: modelContext.firstSortOrder(for: Bank.self, isActive: isActive)
                             )
                             modelContext.insert(bank)
                             onCreate?()

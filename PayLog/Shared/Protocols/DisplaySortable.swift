@@ -59,6 +59,21 @@ extension ModelContext {
             .max() ?? -1
         return currentMaxSortOrder + 1
     }
+
+    func firstSortOrder<Model: PersistentModel & DisplaySortable>(
+        for modelType: Model.Type,
+        isActive: Bool
+    ) -> Int {
+        let descriptor = FetchDescriptor<Model>()
+        let matchingItems = (try? fetch(descriptor))?
+            .filter { $0.isActive == isActive } ?? []
+
+        for item in matchingItems {
+            item.sortOrder += 1
+        }
+
+        return 0
+    }
 }
 
 extension Bank: DisplaySortable {}

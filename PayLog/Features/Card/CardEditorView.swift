@@ -202,7 +202,7 @@ struct CardEditorView: View {
                                     ? selectedAnnualFeeSubscription
                                     : nil,
                                 isActive: isActive,
-                                sortOrder: modelContext.nextSortOrder(for: Card.self, isActive: isActive)
+                                sortOrder: modelContext.firstSortOrder(for: Card.self, isActive: isActive)
                             )
                             modelContext.insert(card)
                             onCreate?()

@@ -257,7 +257,7 @@ struct SubscriptionEditorView: View {
                                 card: selectedCard,
                                 bank: selectedBank,
                                 isActive: isActive,
-                                sortOrder: modelContext.nextSortOrder(for: SubscriptionItem.self, isActive: isActive)
+                                sortOrder: modelContext.firstSortOrder(for: SubscriptionItem.self, isActive: isActive)
                             )
                             modelContext.insert(subscription)
                             onCreate?()

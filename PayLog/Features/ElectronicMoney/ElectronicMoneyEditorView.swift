@@ -156,7 +156,7 @@ struct ElectronicMoneyEditorView: View {
                                 card: selectedCard,
                                 bank: selectedBank,
                                 isActive: isActive,
-                                sortOrder: modelContext.nextSortOrder(for: ElectronicMoney.self, isActive: isActive)
+                                sortOrder: modelContext.firstSortOrder(for: ElectronicMoney.self, isActive: isActive)
                             )
                             modelContext.insert(electronicMoney)
                             onCreate?()
