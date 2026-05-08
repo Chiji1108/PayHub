@@ -350,6 +350,7 @@ struct SubscriptionInsightsView: View {
                     guard newValue != nil else { return }
                     isSubscriptionBreakdownExpanded = true
                 }
+                .sensoryFeedback(.selection, trigger: selectedPaymentSourceSegment?.item.id)
                 .chartLegend(position: .bottom, alignment: .center, spacing: 24)
                 .chartBackground { chartProxy in
                     GeometryReader { geometry in
