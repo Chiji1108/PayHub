@@ -79,6 +79,7 @@ struct SubscriptionEditorView: View {
                 Section {
                     TextField("固定費名", text: $name)
                     Toggle("利用中", isOn: $isActive)
+                        .sensoryFeedback(.selection, trigger: isActive)
                 } header: {
                     Text("基本情報")
                 } footer: {

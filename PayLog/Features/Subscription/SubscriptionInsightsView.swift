@@ -71,6 +71,7 @@ struct SubscriptionInsightsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    .sensoryFeedback(.selection, trigger: selectedPeriod)
                 } header: {
                     Text("換算単位")
                 }

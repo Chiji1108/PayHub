@@ -56,6 +56,7 @@ struct ElectronicMoneyEditorView: View {
                 Section("基本情報") {
                     TextField("ウォレット名", text: $name)
                     Toggle("利用中", isOn: $isActive)
+                        .sensoryFeedback(.selection, trigger: isActive)
                 }
 
                 Section("入金元") {

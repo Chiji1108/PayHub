@@ -66,6 +66,7 @@ struct CardEditorView: View {
                 Section {
                     TextField("カード名", text: $name)
                     Toggle("利用中", isOn: $isActive)
+                        .sensoryFeedback(.selection, trigger: isActive)
                     TextField("末尾4桁", text: $lastFourDigits)
                         .keyboardType(.numberPad)
                         .onChange(of: lastFourDigits) { _, newValue in

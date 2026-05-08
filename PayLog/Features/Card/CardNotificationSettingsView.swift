@@ -118,6 +118,7 @@ struct CardNotificationSettingsView: View {
     ) -> some View {
         Section {
             Toggle("\(title)をオン", isOn: isEnabled)
+                .sensoryFeedback(.selection, trigger: isEnabled.wrappedValue)
 
             if isEnabled.wrappedValue {
                 Stepper(value: daysBefore, in: 0...30) {

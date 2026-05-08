@@ -54,6 +54,7 @@ struct BankEditorView: View {
                 Section {
                     TextField("銀行名", text: $name)
                     Toggle("利用中", isOn: $isActive)
+                        .sensoryFeedback(.selection, trigger: isActive)
                     TextField("支店名", text: $branchName)
                     TextField("口座番号", text: $accountNumber)
                         .keyboardType(.numberPad)
