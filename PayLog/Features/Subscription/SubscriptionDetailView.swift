@@ -18,7 +18,25 @@ struct SubscriptionDetailView: View {
             Section("固定費") {
                 ActiveStatusLabeledContent(item: subscription)
                 LabeledContent("金額", value: subscription.amountWithBillingCycleText)
-                if let billingStatus = subscription.nextBillingStatus {
+                if let billingStatus = subscription.nextBillingStatus,
+                   shouldShowBillingStatus(billingStatus) {
+                    BillingScheduleProgressView(
+                        scheduleLabel: subscription.billingDateLabel,
+                        countdownLabel: subscription.billingCountdownLabel,
+                        status: billingStatus,
+                        isActive: subscription.isActive
+                    )
+                }
+
+                if let cancellationStatus = subscription.nextCancellationStatus {
+                    BillingScheduleProgressView(
+                        scheduleLabel: "解約予定日",
+                        countdownLabel: "解約",
+                        status: cancellationStatus,
+                        isActive: subscription.isActive,
+                        systemImage: "xmark.circle"
+                    )
+                } else if let billingStatus = subscription.nextBillingStatus {
                     BillingScheduleProgressView(
                         scheduleLabel: subscription.billingDateLabel,
                         countdownLabel: subscription.billingCountdownLabel,
@@ -74,15 +92,15 @@ struct SubscriptionDetailView: View {
         }
         .navigationTitle(subscription.name)
         .toolbar {
-            if let billingEventDraft {
+            if let calendarEventDraft {
                 ToolbarItem(placement: .topBarTrailing) {
                     CalendarEventAddButton(
-                        title: "\(subscription.billingCountdownLabel)日をカレンダーに追加",
-                        draft: billingEventDraft
+                        title: calendarEventTitle,
+                        draft: calendarEventDraft
                     ) {
                         Image(systemName: "calendar.badge.plus")
                     }
-                    .accessibilityLabel("\(subscription.billingCountdownLabel)日をカレンダーに追加")
+                    .accessibilityLabel(calendarEventTitle)
                 }
             }
 
@@ -97,6 +115,39 @@ struct SubscriptionDetailView: View {
                 dismiss()
             })
         }
+    }
+
+    private var calendarEventTitle: String {
+        if subscription.nextCancellationStatus != nil {
+            return "解約予定日をカレンダーに追加"
+        }
+
+        return "\(subscription.billingCountdownLabel)日をカレンダーに追加"
+    }
+
+    private var calendarEventDraft: CalendarEventDraft? {
+        cancellationEventDraft ?? billingEventDraft
+    }
+
+    private var cancellationEventDraft: CalendarEventDraft? {
+        guard let status = subscription.nextCancellationStatus else {
+            return nil
+        }
+
+        let startDate = status.nextDate
+        let endDate = Calendar.autoupdatingCurrent.date(byAdding: .day, value: 1, to: startDate) ?? startDate
+        let notes = [subscription.amountWithBillingCycleText, subscription.trimmedNotes]
+            .compactMap { $0 }
+            .joined(separator: "\n")
+
+        return CalendarEventDraft(
+            title: "\(subscription.name) 解約予定日",
+            startDate: startDate,
+            endDate: endDate,
+            isAllDay: true,
+            notes: notes.isEmpty ? nil : notes,
+            recurrence: nil
+        )
     }
 
     private var billingEventDraft: CalendarEventDraft? {
@@ -118,6 +169,19 @@ struct SubscriptionDetailView: View {
             notes: notes.isEmpty ? nil : notes,
             recurrence: subscription.calendarEventRecurrence
         )
+    }
+
+    private func shouldShowBillingStatus(_ billingStatus: BillingScheduleStatus) -> Bool {
+        guard subscription.isActive else {
+            return false
+        }
+
+        guard let cancellationScheduledDate = subscription.cancellationScheduledDate else {
+            return false
+        }
+
+        return Calendar.autoupdatingCurrent.startOfDay(for: billingStatus.nextDate)
+            < Calendar.autoupdatingCurrent.startOfDay(for: cancellationScheduledDate)
     }
 }
 

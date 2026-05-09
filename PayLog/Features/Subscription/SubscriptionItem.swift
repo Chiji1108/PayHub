@@ -236,6 +236,7 @@ final class SubscriptionItem {
     private var paymentMethodRawValue: String?
     var notes: String?
     var isActive: Bool = true
+    var cancellationScheduledDate: Date?
     var card: Card?
     var bank: Bank?
     var annualFeeCard: Card?
@@ -312,6 +313,7 @@ final class SubscriptionItem {
         card: Card? = nil,
         bank: Bank? = nil,
         isActive: Bool = true,
+        cancellationScheduledDate: Date? = nil,
         sortOrder: Int = 0
     ) {
         self.name = name
@@ -331,5 +333,10 @@ final class SubscriptionItem {
         self.card = paymentMethod == .card ? card : nil
         self.bank = paymentMethod == .bankAccount ? bank : nil
         self.isActive = isActive
+        if isActive, let cancellationScheduledDate {
+            self.cancellationScheduledDate = Calendar.autoupdatingCurrent.startOfDay(for: cancellationScheduledDate)
+        } else {
+            self.cancellationScheduledDate = nil
+        }
     }
 }

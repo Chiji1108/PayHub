@@ -45,7 +45,7 @@ struct ContentView: View {
                 firstLaunchTimestamp = Date.now.timeIntervalSince1970
             }
 
-            await NotificationScheduler.shared.rescheduleAll(using: modelContext)
+            refreshLifecycleAndNotifications()
         }
         .fullScreenCover(isPresented: onboardingBinding) {
             OnboardingView {
@@ -62,9 +62,14 @@ struct ContentView: View {
                 return
             }
 
-            Task {
-                await NotificationScheduler.shared.rescheduleAll(using: modelContext)
-            }
+            refreshLifecycleAndNotifications()
+        }
+    }
+
+    private func refreshLifecycleAndNotifications() {
+        Task {
+            SubscriptionLifecycleUpdater.stopDueCancellations(using: modelContext)
+            await NotificationScheduler.shared.rescheduleAll(using: modelContext)
         }
     }
 

@@ -407,7 +407,25 @@ private struct SubscriptionRow: View {
                 showIndicator: false
             )
 
-            if subscription.isActive, let billingStatus = subscription.nextBillingStatus {
+            if let billingStatus = subscription.nextBillingStatus,
+               shouldShowBillingStatus(billingStatus) {
+                BillingScheduleProgressView(
+                    scheduleLabel: subscription.billingDateLabel,
+                    countdownLabel: subscription.billingCountdownLabel,
+                    status: billingStatus,
+                    isActive: subscription.isActive
+                )
+            }
+
+            if let cancellationStatus = subscription.nextCancellationStatus {
+                BillingScheduleProgressView(
+                    scheduleLabel: "解約予定日",
+                    countdownLabel: "解約",
+                    status: cancellationStatus,
+                    isActive: subscription.isActive,
+                    systemImage: "xmark.circle"
+                )
+            } else if subscription.isActive, let billingStatus = subscription.nextBillingStatus {
                 BillingScheduleProgressView(
                     scheduleLabel: subscription.billingDateLabel,
                     countdownLabel: subscription.billingCountdownLabel,
@@ -416,6 +434,19 @@ private struct SubscriptionRow: View {
                 )
             }
         }
+    }
+
+    private func shouldShowBillingStatus(_ billingStatus: BillingScheduleStatus) -> Bool {
+        guard subscription.isActive else {
+            return false
+        }
+
+        guard let cancellationScheduledDate = subscription.cancellationScheduledDate else {
+            return false
+        }
+
+        return Calendar.autoupdatingCurrent.startOfDay(for: billingStatus.nextDate)
+            < Calendar.autoupdatingCurrent.startOfDay(for: cancellationScheduledDate)
     }
 }
 

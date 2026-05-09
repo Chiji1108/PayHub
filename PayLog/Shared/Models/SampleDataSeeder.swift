@@ -166,13 +166,22 @@ enum SampleDataSeeder {
             paymentMethod: .card,
             card: visa
         )
+        scheduleCancellation(for: chatGPTPlus, daysAfterNextBilling: 14, referenceDate: now)
+        let newspaper = SubscriptionItem(
+            name: "新聞購読",
+            amount: 3400,
+            createdAt: createdAt(minutesAgo: 55),
+            billingUnit: .month,
+            paymentMethod: .invoice,
+            notes: "請求日は未確認"
+        )
         let oliveAnnualFee = SubscriptionItem(
             name: "Olive 年会費",
             amount: 5500,
             createdAt: createdAt(minutesAgo: 20),
             billingUnit: .year,
-            billingAnchorDate: anchoredDate(year: currentYear, month: 5, day: 1),
             paymentMethod: .card,
+            notes: "請求日は未確認",
             card: visa
         )
         let mufgAnnualFee = SubscriptionItem(
@@ -194,7 +203,7 @@ enum SampleDataSeeder {
         [visa, rakuten].normalizeSortOrders()
         [master].normalizeSortOrders()
         [suica, payPay].normalizeSortOrders()
-        [netflix, petTrimming, fixedAssetTax, chatGPTPlus, oliveAnnualFee].normalizeSortOrders()
+        [netflix, petTrimming, fixedAssetTax, chatGPTPlus, newspaper, oliveAnnualFee].normalizeSortOrders()
         [spotify, youtubePremium, mufgAnnualFee].normalizeSortOrders()
 
         context.insert(mitsui)
@@ -211,6 +220,7 @@ enum SampleDataSeeder {
         context.insert(petTrimming)
         context.insert(fixedAssetTax)
         context.insert(chatGPTPlus)
+        context.insert(newspaper)
         context.insert(oliveAnnualFee)
         context.insert(mufgAnnualFee)
     }
@@ -293,8 +303,8 @@ enum SampleDataSeeder {
             amount: 5500,
             createdAt: createdAt(minutesAgo: 40),
             billingUnit: .year,
-            billingAnchorDate: anchoredDate(year: currentYear, month: 5, day: 1),
             paymentMethod: .bankAccount,
+            notes: "請求日は未確認",
             bank: mitsui
         )
         let chatGPTPlus = SubscriptionItem(
@@ -307,6 +317,7 @@ enum SampleDataSeeder {
             paymentMethod: .card,
             card: visa
         )
+        scheduleCancellation(for: chatGPTPlus, daysAfterNextBilling: 14, referenceDate: now)
 
         visa.annualFeeSubscription = oliveAnnualFee
 
@@ -351,5 +362,25 @@ enum SampleDataSeeder {
         for record in records {
             context.delete(record)
         }
+    }
+
+    private static func scheduleCancellation(
+        for subscription: SubscriptionItem,
+        daysAfterNextBilling: Int = 0,
+        referenceDate: Date,
+        calendar: Calendar = .autoupdatingCurrent
+    ) {
+        guard let nextBillingDate = subscription.billingStatus(
+            referenceDate: referenceDate,
+            calendar: calendar
+        )?.nextDate else {
+            return
+        }
+
+        subscription.cancellationScheduledDate = calendar.date(
+            byAdding: .day,
+            value: max(daysAfterNextBilling, 0),
+            to: nextBillingDate
+        )
     }
 }

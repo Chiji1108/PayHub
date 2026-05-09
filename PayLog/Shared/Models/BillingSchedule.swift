@@ -509,6 +509,10 @@ extension SubscriptionItem {
         billingStatus()
     }
 
+    var nextCancellationStatus: BillingScheduleStatus? {
+        cancellationStatus()
+    }
+
     func billingStatus(
         referenceDate: Date = .now,
         calendar: Calendar = .autoupdatingCurrent
@@ -524,5 +528,47 @@ extension SubscriptionItem {
             referenceDate: referenceDate,
             calendar: calendar
         )
+    }
+
+    func cancellationStatus(
+        referenceDate: Date = .now,
+        calendar: Calendar = .autoupdatingCurrent
+    ) -> BillingScheduleStatus? {
+        guard isActive,
+              let cancellationScheduledDate else {
+            return nil
+        }
+
+        let startOfReferenceDate = calendar.startOfDay(for: referenceDate)
+        let targetDate = calendar.startOfDay(for: cancellationScheduledDate)
+        guard targetDate > startOfReferenceDate else {
+            return nil
+        }
+
+        let billingPreviousDate = billingStatus(referenceDate: referenceDate, calendar: calendar)?.previousDate
+        let previousDate = if let billingPreviousDate, billingPreviousDate < targetDate {
+            billingPreviousDate
+        } else {
+            startOfReferenceDate
+        }
+
+        return BillingScheduleStatus(
+            previousDate: previousDate,
+            nextDate: targetDate,
+            referenceDate: startOfReferenceDate,
+            calendar: calendar
+        )
+    }
+
+    func isCancellationDue(
+        referenceDate: Date = .now,
+        calendar: Calendar = .autoupdatingCurrent
+    ) -> Bool {
+        guard isActive,
+              let cancellationScheduledDate else {
+            return false
+        }
+
+        return calendar.startOfDay(for: cancellationScheduledDate) <= calendar.startOfDay(for: referenceDate)
     }
 }

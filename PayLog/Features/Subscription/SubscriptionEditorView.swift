@@ -35,6 +35,7 @@ struct SubscriptionEditorView: View {
     @State private var paymentMethod: SubscriptionPaymentMethod = .unspecified
     @State private var notes = ""
     @State private var isActive = true
+    @State private var cancellationScheduledDate: Date?
     @State private var selectedCardID: PersistentIdentifier?
     @State private var selectedBankID: PersistentIdentifier?
     @State private var deleteRequest: DeleteRequest<SubscriptionItem>?
@@ -71,6 +72,7 @@ struct SubscriptionEditorView: View {
         _paymentMethod = State(initialValue: subscription?.paymentMethod ?? .unspecified)
         _notes = State(initialValue: subscription?.notes ?? "")
         _isActive = State(initialValue: subscription?.isActive ?? true)
+        _cancellationScheduledDate = State(initialValue: subscription?.cancellationScheduledDate)
         _selectedCardID = State(initialValue: subscription?.card?.persistentModelID)
         _selectedBankID = State(initialValue: subscription?.bank?.persistentModelID)
     }
@@ -82,6 +84,10 @@ struct SubscriptionEditorView: View {
                     TextField("固定費名", text: $name)
                     Toggle("利用中", isOn: $isActive)
                         .sensoryFeedback(.selection, trigger: isActive)
+
+                    if subscription != nil, isActive {
+                        cancellationScheduleControl
+                    }
                 } header: {
                     Text("基本情報")
                 } footer: {
@@ -238,6 +244,7 @@ struct SubscriptionEditorView: View {
                             subscription.card = selectedCard
                             subscription.bank = selectedBank
                             subscription.isActive = isActive
+                            subscription.cancellationScheduledDate = normalizedCancellationScheduledDate
                             if didChangeActiveState {
                                 subscription.sortOrder = modelContext.nextSortOrder(
                                     for: SubscriptionItem.self,
@@ -257,6 +264,7 @@ struct SubscriptionEditorView: View {
                                 card: selectedCard,
                                 bank: selectedBank,
                                 isActive: isActive,
+                                cancellationScheduledDate: normalizedCancellationScheduledDate,
                                 sortOrder: modelContext.firstSortOrder(for: SubscriptionItem.self, isActive: isActive)
                             )
                             modelContext.insert(subscription)
@@ -311,6 +319,40 @@ struct SubscriptionEditorView: View {
         SubscriptionBillingFrequency(interval: billingInterval, unit: billingUnit)
     }
 
+    @ViewBuilder
+    private var cancellationScheduleControl: some View {
+        if cancellationScheduledDate != nil {
+            DatePicker(
+                "解約予定日",
+                selection: cancellationScheduledDateBinding,
+                in: cancellationScheduledDateRange,
+                displayedComponents: .date
+            )
+
+            Button("解約予定を取り消す", role: .cancel) {
+                self.cancellationScheduledDate = nil
+            }
+        } else if let nextDate = draftBillingStatus?.nextDate {
+            Button("解約予定にする") {
+                cancellationScheduledDate = Calendar.autoupdatingCurrent.startOfDay(for: nextDate)
+            }
+        }
+    }
+
+    private var cancellationScheduledDateBinding: Binding<Date> {
+        Binding {
+            cancellationScheduledDate
+                ?? draftBillingStatus?.nextDate
+                ?? Calendar.autoupdatingCurrent.startOfDay(for: .now)
+        } set: { newValue in
+            cancellationScheduledDate = Calendar.autoupdatingCurrent.startOfDay(for: newValue)
+        }
+    }
+
+    private var cancellationScheduledDateRange: PartialRangeFrom<Date> {
+        Calendar.autoupdatingCurrent.startOfDay(for: .now)...
+    }
+
     private var billingDateLabel: String {
         switch paymentMethod {
         case .onSite:
@@ -320,12 +362,38 @@ struct SubscriptionEditorView: View {
         }
     }
 
+    private var billingCountdownLabel: String {
+        paymentMethod.billingCountdownLabel
+    }
+
+    private var draftBillingStatus: BillingScheduleStatus? {
+        guard let normalizedAnchorDate else {
+            return nil
+        }
+
+        return BillingScheduleCalculator.recurringStatus(
+            unit: billingUnit,
+            interval: billingInterval,
+            anchorDate: normalizedAnchorDate
+        )
+    }
+
     private var normalizedAnchorDate: Date? {
         guard hasBillingAnchorDate else {
             return nil
         }
 
         return Calendar.autoupdatingCurrent.startOfDay(for: billingAnchorDate)
+    }
+
+    private var normalizedCancellationScheduledDate: Date? {
+        guard isActive,
+              hasBillingAnchorDate,
+              let cancellationScheduledDate else {
+            return nil
+        }
+
+        return Calendar.autoupdatingCurrent.startOfDay(for: cancellationScheduledDate)
     }
 
     private var parsedAmount: Decimal? {

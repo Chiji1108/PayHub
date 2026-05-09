@@ -13,6 +13,21 @@ struct BillingScheduleProgressView: View {
     let countdownLabel: String
     let status: BillingScheduleStatus?
     let isActive: Bool
+    let systemImage: String
+
+    init(
+        scheduleLabel: String,
+        countdownLabel: String,
+        status: BillingScheduleStatus?,
+        isActive: Bool,
+        systemImage: String = "repeat"
+    ) {
+        self.scheduleLabel = scheduleLabel
+        self.countdownLabel = countdownLabel
+        self.status = status
+        self.isActive = isActive
+        self.systemImage = systemImage
+    }
 
     var body: some View {
         if editMode?.wrappedValue != .active {
@@ -20,7 +35,7 @@ struct BillingScheduleProgressView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         HStack(spacing: 6) {
-                            Image(systemName: "repeat")
+                            Image(systemName: systemImage)
                             Text(status.nextDate.formatted(.dateTime.year().month(.defaultDigits).day(.defaultDigits).weekday(.abbreviated)))
                         }
                         .font(.subheadline)
