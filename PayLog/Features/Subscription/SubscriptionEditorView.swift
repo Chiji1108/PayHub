@@ -94,6 +94,10 @@ struct SubscriptionEditorView: View {
                     if hasAttemptedSave, trimmedName.isEmpty {
                         Text("固定費名を入力してください。")
                     }
+
+                    if isActive, cancellationScheduledDate != nil {
+                        Text("解約予定日になると、自動的に停止中になります。")
+                    }
                 }
 
                 Section {
@@ -332,7 +336,7 @@ struct SubscriptionEditorView: View {
             Button("解約予定を取り消す", role: .cancel) {
                 self.cancellationScheduledDate = nil
             }
-        } else if let nextDate = draftBillingStatus?.nextDate {
+        } else if let nextDate = defaultCancellationScheduledDate {
             Button("解約予定にする") {
                 cancellationScheduledDate = Calendar.autoupdatingCurrent.startOfDay(for: nextDate)
             }
@@ -342,7 +346,7 @@ struct SubscriptionEditorView: View {
     private var cancellationScheduledDateBinding: Binding<Date> {
         Binding {
             cancellationScheduledDate
-                ?? draftBillingStatus?.nextDate
+                ?? defaultCancellationScheduledDate
                 ?? Calendar.autoupdatingCurrent.startOfDay(for: .now)
         } set: { newValue in
             cancellationScheduledDate = Calendar.autoupdatingCurrent.startOfDay(for: newValue)
@@ -378,6 +382,24 @@ struct SubscriptionEditorView: View {
         )
     }
 
+    private var defaultCancellationScheduledDate: Date? {
+        if let nextBillingDate = draftBillingStatus?.nextDate {
+            return nextBillingDate
+        }
+
+        let calendar = Calendar.autoupdatingCurrent
+        let startOfToday = calendar.startOfDay(for: .now)
+
+        return switch billingUnit {
+        case .week:
+            calendar.date(byAdding: .day, value: billingInterval * 7, to: startOfToday)
+        case .month:
+            calendar.date(byAdding: .month, value: billingInterval, to: startOfToday)
+        case .year:
+            calendar.date(byAdding: .year, value: billingInterval, to: startOfToday)
+        }
+    }
+
     private var normalizedAnchorDate: Date? {
         guard hasBillingAnchorDate else {
             return nil
@@ -388,7 +410,6 @@ struct SubscriptionEditorView: View {
 
     private var normalizedCancellationScheduledDate: Date? {
         guard isActive,
-              hasBillingAnchorDate,
               let cancellationScheduledDate else {
             return nil
         }
